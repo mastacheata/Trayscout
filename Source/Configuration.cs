@@ -10,6 +10,7 @@ namespace Trayscout
     {
         public string BaseUrl { get; }
         public string ApiSecretHash { get; }
+        public string AccessToken { get; }
         public int UpdateInterval { get; }
         public float High { get; }
         public float Low { get; }
@@ -39,7 +40,15 @@ namespace Trayscout
                 BaseUrl += "/";
             if (!BaseUrl.EndsWith("api/v1/"))
                 BaseUrl += "api/v1/";
-            ApiSecretHash = Sha1(ini.ReadString("Config", "APISecret"));
+            // Prefer an access token (restricted role) over the full API secret
+            AccessToken = ini.ReadOptionalString("Config", "AccessToken");
+            if (AccessToken == null)
+            {
+                string apiSecret = ini.ReadOptionalString("Config", "APISecret");
+                if (apiSecret == null)
+                    throw new Exception("Neither AccessToken nor APISecret is configured.");
+                ApiSecretHash = Sha1(apiSecret);
+            }
             UpdateInterval = ini.ReadInt("Config", "UpdateInterval");
             High = ini.ReadFloat("Config", "High");
             Low = ini.ReadFloat("Config", "Low");

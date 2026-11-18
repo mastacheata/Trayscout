@@ -27,6 +27,14 @@ namespace Trayscout
             return value;
         }
 
+        public string ReadOptionalString(string section, string key)
+        {
+            StringBuilder sb = new StringBuilder(255);
+            GetPrivateProfileString(section, key, "", sb, 255, _filePath);
+            string value = sb.ToString();
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
         public int ReadInt(string section, string key)
         {
             string value = ReadString(section, key);

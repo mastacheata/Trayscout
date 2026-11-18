@@ -5,7 +5,8 @@ This lightweight Nightscout client for Windows will display your latest blood gl
 
 A simple INI file is used for configuration:
 - BaseUrl = URL of your Nightscout instance
-- APISecret = API secret of your Nightscout instance
+- AccessToken = Access token of a Nightscout subject (Admin Tools > Subjects, e.g. with the readable role); preferred over APISecret
+- APISecret = API secret of your Nightscout instance (only used if AccessToken is not set)
 - UpdateInterval = Blood glucose update interval in minutes
 - High = Upper limit of your normal range (for example 200 or 11.1)
 - Low = Lower limit of your normal range (for example 80 or 4.4)
@@ -22,7 +23,7 @@ A simple INI file is used for configuration:
 
 How to use:
 - Extract the Trayscout.zip into a folder of your choice
-- Open Config.ini in Notepad > Set at least BaseUrl and APISecret > Save and close
+- Open Config.ini in Notepad > Set at least BaseUrl and AccessToken (or APISecret) > Save and close
 - Run Trayscout.exe, now you should see your blood glucose value in the system tray
   - If not, an error window should pop up and tell you what's wrong
 

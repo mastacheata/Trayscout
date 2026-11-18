@@ -32,7 +32,8 @@ namespace Trayscout
 
                 _client = new HttpClient();
                 _client.BaseAddress = new Uri(_config.BaseUrl);
-                _client.DefaultRequestHeaders.Add("API-Secret", _config.ApiSecretHash);
+                if (_config.AccessToken == null)
+                    _client.DefaultRequestHeaders.Add("API-Secret", _config.ApiSecretHash);
 
                 _lastAlarm = DateTime.MinValue;
 
@@ -111,13 +112,21 @@ namespace Trayscout
 
         private IList<Entry> GetLatestEntries(int count)
         {
-            HttpResponseMessage requestResult = _client.GetAsync("entries?count=" + count).Result;
+            HttpResponseMessage requestResult = _client.GetAsync(BuildEntriesUrl(count)).Result;
             if (!requestResult.IsSuccessStatusCode)
                 throw new NightscoutException("Nightscout API: HTTP " + (int)requestResult.StatusCode + " " + requestResult.StatusCode);
             string content = requestResult.Content.ReadAsStringAsync().Result;
             IList<string> lines = content.Replace("\r\n", "\n").Split('\n').ToList();
             IList<Entry> entries = lines.Select(x => new Entry(x, _config.Unit)).Distinct().OrderByDescending(x => x.Timestamp).ToList();
             return entries;
+        }
+
+        private string BuildEntriesUrl(int count)
+        {
+            string url = "entries?count=" + count;
+            if (_config.AccessToken != null)
+                url += "&token=" + Uri.EscapeDataString(_config.AccessToken);
+            return url;
         }
 
         private void SetIcon(Entry entry)
