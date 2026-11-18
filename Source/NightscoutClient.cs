@@ -20,6 +20,7 @@ namespace Trayscout
         private Bitmap _symbols;
         private GlucoseDiagram _diagram;
         private bool _diagramOpened;
+        private bool _settingsOpened;
 
         public NightscoutClient()
         {
@@ -30,10 +31,7 @@ namespace Trayscout
                 Ini ini = GetIni();
                 _config = new Configuration(ini);
 
-                _client = new HttpClient();
-                _client.BaseAddress = new Uri(_config.BaseUrl);
-                if (_config.AccessToken == null)
-                    _client.DefaultRequestHeaders.Add("API-Secret", _config.ApiSecretHash);
+                _client = CreateClient(_config);
 
                 _lastAlarm = DateTime.MinValue;
 
@@ -166,10 +164,70 @@ namespace Trayscout
             _trayIcon = new NotifyIcon()
             {
                 Icon = ico,
-                ContextMenu = new ContextMenu(new MenuItem[] { new MenuItem("Exit", Exit) }),
+                ContextMenu = new ContextMenu(new MenuItem[] { new MenuItem("Settings...", OpenSettings), new MenuItem("Exit", Exit) }),
                 Visible = true
             };
             _trayIcon.Click += OpenGlucoseDiagram;
+        }
+
+        private void OpenSettings(object sender, EventArgs e)
+        {
+            if (_settingsOpened)
+                return;
+            _settingsOpened = true;
+            try
+            {
+                Ini ini = GetIni();
+                using (SettingsForm form = new SettingsForm(ini))
+                {
+                    if (form.ShowDialog() != DialogResult.OK)
+                        return;
+                }
+
+                ApplyConfiguration(ini);
+            }
+            catch (Exception ex)
+            {
+                while (ex.InnerException != null)
+                    ex = ex.InnerException;
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _settingsOpened = false;
+            }
+        }
+
+        private void ApplyConfiguration(Ini ini)
+        {
+            Configuration config = new Configuration(ini);
+            HttpClient client = CreateClient(config);
+
+            HttpClient oldClient = _client;
+            _config = config;
+            _client = client;
+            oldClient?.Dispose();
+
+            _timer.Interval = 1000 * 60 * _config.UpdateInterval;
+            _lastAlarm = DateTime.MinValue;
+
+            try
+            {
+                Update(false);
+            }
+            catch (NightscoutException)
+            {
+                // already reported to the user by Update
+            }
+        }
+
+        private static HttpClient CreateClient(Configuration config)
+        {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(config.BaseUrl);
+            if (config.AccessToken == null)
+                client.DefaultRequestHeaders.Add("API-Secret", config.ApiSecretHash);
+            return client;
         }
 
         private void OpenGlucoseDiagram(object sender, EventArgs e)

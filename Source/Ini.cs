@@ -10,6 +10,9 @@ namespace Trayscout
         [DllImport("kernel32", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string Section, string Key, string Default, StringBuilder RetVal, int Size, string FilePath);
 
+        [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
+        static extern bool WritePrivateProfileString(string Section, string Key, string Value, string FilePath);
+
         private string _filePath { get; }
 
         public Ini(string filePath)
@@ -33,6 +36,12 @@ namespace Trayscout
             GetPrivateProfileString(section, key, "", sb, 255, _filePath);
             string value = sb.ToString();
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        public void WriteString(string section, string key, string value)
+        {
+            if (!WritePrivateProfileString(section, key, value ?? "", _filePath))
+                throw new Exception("Could not write " + key + " to " + _filePath + " (is the file writable?).");
         }
 
         public int ReadInt(string section, string key)

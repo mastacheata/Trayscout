@@ -21,6 +21,8 @@ A simple INI file is used for configuration:
 - FontFamily = Font family used for axis labels
 - FontSize = Font size used for axis labels
 
+Settings can also be changed while the app is running: right click the tray icon > Settings... (changes are saved to Config.ini and applied immediately).
+
 How to use:
 - Extract the Trayscout.zip into a folder of your choice
 - Open Config.ini in Notepad > Set at least BaseUrl and AccessToken (or APISecret) > Save and close
